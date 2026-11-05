@@ -67,8 +67,19 @@ button:disabled{opacity:.55;cursor:default}
 .keybox{border-top:1px solid var(--line);padding-top:14px}
 .facts{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.9rem;color:var(--muted)}
 .facts b{color:var(--ink);font-variant-numeric:tabular-nums}
-.names{display:flex;flex-wrap:wrap;gap:6px}
-.name{font-size:.85rem;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--soft)}
+/* who's in: one small folded wish slip per person */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.pcard{background:var(--paper);color:#1d2a2a;border-radius:6px;padding:12px 16px 10px;border:1px solid rgba(0,0,0,.08);
+  box-shadow:0 4px 12px rgba(0,0,0,.10);display:flex;flex-direction:column;min-width:0}
+.pcard .who{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
+.pcard .nm{font:700 1.75rem/1.15 var(--hand);color:#1E5B4C;overflow-wrap:anywhere;min-width:0}
+.pcard li{border-bottom:1px solid rgba(30,91,76,.16)}
+.pcard li:last-child{border-bottom:0}
+.pcard .you{flex-shrink:0;font:700 .68rem var(--body);letter-spacing:.08em;text-transform:uppercase;background:#1E5B4C;color:#fff;padding:3px 8px;border-radius:99px}
+.pcard ol{list-style:none;margin:4px 0 0;padding:0;font:500 1.35rem/32px var(--hand)}
+.pcard li{display:flex;gap:10px;color:#7d8a8a;letter-spacing:.12em}
+.pcard li b{font-weight:500;color:#A8233A;letter-spacing:0;font-variant-numeric:tabular-nums}
+.empty{grid-column:1/-1}
 .phead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
 .prow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap}
 .prow:first-child{border-top:0}
@@ -117,6 +128,7 @@ footer a{color:var(--muted);font-size:.85rem}
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="t-wish" aria-selected="true" data-p="p-wish"><span data-i18n="step1"></span><b data-i18n="tabWish"></b></button>
     <button class="tab" role="tab" id="t-draw" aria-selected="false" data-p="p-draw"><span data-i18n="step2"></span><b data-i18n="tabDraw"></b></button>
+    <button class="tab" role="tab" id="t-list" aria-selected="false" data-p="p-list"><span data-i18n="listTag"></span><b data-i18n="tabList"></b></button>
     <button class="tab" role="tab" id="t-org" aria-selected="false" data-p="p-org" hidden><span data-i18n="orgTag"></span><b data-i18n="tabOrg"></b></button>
   </div>
 
@@ -140,10 +152,18 @@ footer a{color:var(--muted);font-size:.85rem}
         <div class="btns"><button class="ghost small" id="w-keycopy" data-i18n="copyKey"></button><span class="hint" id="w-keydone" data-i18n="copied" hidden></span></div>
       </div>
     </div>
-    <div class="stack">
-      <div class="phead"><h2 data-i18n="alreadyIn"></h2><button class="ghost small" id="w-refresh" data-i18n="refresh"></button></div>
-      <div class="names" id="w-names"></div>
+    <div class="btns"><span class="hint" id="w-count"></span><button class="ghost small" id="w-seeall" data-i18n="seeAll"></button></div>
+  </section>
+
+  <!-- Wer ist dabei -->
+  <section class="panel" id="p-list" hidden>
+    <div>
+      <h2 data-i18n="listH"></h2>
+      <p class="lead" data-i18n="listLead"></p>
     </div>
+    <p class="msg" id="l-state" hidden></p>
+    <div class="phead"><span class="hint" id="l-count"></span><button class="ghost small" id="l-refresh" data-i18n="refresh"></button></div>
+    <div class="grid" id="l-grid"></div>
   </section>
 
   <!-- Zettel ziehen -->
@@ -244,7 +264,11 @@ footer a{color:var(--muted);font-size:.85rem}
       full:"Es sind schon zu viele Personen eingetragen.",
       keyHint:"Das ist dein persönlicher Schlüssel für deinen Zettel. Er ist in diesem Browser gespeichert. Heb ihn trotzdem für dich auf und schick ihn niemandem. Du brauchst ihn, wenn du deinen Zettel später auf einem anderen Gerät oder in einem anderen Browser ziehst.",
       copyKey:"Schlüssel kopieren",copied:"Kopiert",
-      alreadyIn:"Schon dabei",nobodyYet:"Noch niemand eingetragen.",refresh:"Aktualisieren",
+      nobodyYet:"Noch niemand eingetragen.",refresh:"Aktualisieren",
+      listTag:"Übersicht",tabList:"Wer ist dabei",listH:"Wer ist dabei",
+      listLead:"Die Wünsche bleiben geheim, bis jemand seinen Zettel zieht.",
+      countIn:n=>n===0?"Noch niemand dabei.":n===1?"1 Person ist schon dabei.":"Schon "+n+" Personen dabei.",
+      seeAll:"Alle ansehen",you:"Du",ideaN:i=>"Idee "+i+": verdeckt",
       budget:"Budget",exchangeL:"Bescherung",occasionL:"Anlass",money:b=>b+" €",
       drawH:"Zettel ziehen",
       drawLead:"Sobald ausgelost wurde, tippst du auf „Zettel ziehen“ und klappst deinen Zettel auf. Er geht nur mit deinem Schlüssel auf. Am einfachsten nutzt du dasselbe Gerät und denselben Browser wie beim Wünsche-Abgeben.",
@@ -291,7 +315,11 @@ footer a{color:var(--muted);font-size:.85rem}
       full:"Too many people have signed up already.",
       keyHint:"This is your personal key for your slip. It's saved in this browser. Keep a copy for yourself anyway and don't send it to anyone. You'll need it if you draw your slip later on another device or in another browser.",
       copyKey:"Copy key",copied:"Copied",
-      alreadyIn:"Already in",nobodyYet:"Nobody has signed up yet.",refresh:"Refresh",
+      nobodyYet:"Nobody has signed up yet.",refresh:"Refresh",
+      listTag:"Overview",tabList:"Who's in",listH:"Who's taking part",
+      listLead:"Wishes stay secret until someone draws their slip.",
+      countIn:n=>n===0?"Nobody yet.":n===1?"1 person is in.":n+" people are in.",
+      seeAll:"See everyone",you:"You",ideaN:i=>"Idea "+i+": hidden",
       budget:"Budget",exchangeL:"Gift exchange",occasionL:"Occasion",money:b=>"€"+b,
       drawH:"Draw your slip",
       drawLead:"Once the draw has happened, tap “Draw slip” and unfold your slip. It only opens with your key. The easiest way is to use the same device and browser you used to submit your wishes.",
@@ -474,14 +502,30 @@ footer a{color:var(--muted);font-size:.85rem}
         const sp=document.createElement("span"); sp.append(k+": "); const b=document.createElement("b"); b.textContent=v; sp.append(b); f.appendChild(sp);
       });
     }
-    const box=$("w-names"); box.textContent="";
     const names = STATUS ? STATUS.names : [];
-    if(!names.length){ const p=document.createElement("p"); p.className="hint"; p.textContent=t("nobodyYet"); box.appendChild(p); }
-    names.forEach(n=>{ const s=document.createElement("span"); s.className="name"; s.textContent=n; box.appendChild(s); });
+    $("w-count").textContent = STATUS ? t("countIn")(names.length) : "";
+    $("l-count").textContent = STATUS ? t("count")(names.length) : "";
+    $("l-state").hidden = !(STATUS && STATUS.drawn);
+    $("l-state").textContent = t("readyState");
+    let mine = "";
+    try{ mine = (JSON.parse(store.get("wz-me")||"null")||{}).n || ""; }catch(e){}
+    const grid=$("l-grid"); grid.textContent="";
+    if(!names.length){ const p=document.createElement("p"); p.className="hint empty"; p.textContent=t("nobodyYet"); grid.appendChild(p); }
+    names.forEach(n=>{
+      const card=document.createElement("article"); card.className="pcard";
+      card.innerHTML=`<div class="who"><span class="nm"></span></div><ol><li><b>1</b>???</li><li><b>2</b>???</li><li><b>3</b>???</li></ol>`;
+      card.querySelector(".nm").textContent=n;
+      if(mine && mine.trim().toLowerCase()===n.toLowerCase()){
+        const y=document.createElement("span"); y.className="you"; y.textContent=t("you"); card.querySelector(".who").appendChild(y);
+      }
+      card.querySelectorAll("li").forEach((li,i)=>li.setAttribute("aria-label",t("ideaN")(i+1)));
+      grid.appendChild(card);
+    });
     $("d-state").textContent = STATUS ? t(STATUS.drawn ? "readyState" : "notYet") : "";
   }
   rerender.push(renderStatus);
-  $("w-refresh").addEventListener("click", loadStatus);
+  $("l-refresh").addEventListener("click", loadStatus);
+  $("w-seeall").addEventListener("click", ()=>show("p-list"));
 
   // ---------- step 1: submit wishes ----------
   try{

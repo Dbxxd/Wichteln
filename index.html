@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wichtel-Zettel</title>
+<script>
+/* ===================== EINSTELLUNG =====================
+   Hier die Web-App-Adresse aus Google Apps Script einfügen.
+   Sie endet auf /exec, zum Beispiel:
+   const API_URL = "https://script.google.com/macros/s/AKfy.../exec";          */
+const API_URL = "";
+/* ======================================================= */
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=Caveat:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#EDF1F1; --surface:#FFFFFF; --paper:#FBFAF6; --ink:#17282A; --muted:#5A6B6C;
+  --line:#D3DCDC; --spruce:#1E5B4C; --spruce-ink:#FFFFFF; --berry:#A8233A; --soft:#E1EAE8;
+  --display:"Young Serif",Georgia,serif; --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif; --hand:"Caveat","Comic Sans MS",cursive;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0F1A1B; --surface:#172426; --paper:#EDE9DF; --ink:#E4ECEB; --muted:#93A6A5;
+  --line:#2A3B3C; --spruce:#5FB39B; --spruce-ink:#0C1A17; --berry:#E06A7C; --soft:#1D2F2E; color-scheme:dark}}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+[hidden]{display:none!important}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+header > div{min-width:0}
+header h1{font-family:var(--display);font-weight:400;font-size:clamp(2rem,6vw,2.75rem);line-height:1.1;margin:0;text-wrap:balance}
+header p{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.lang{display:flex;flex-shrink:0;background:var(--soft);padding:4px;border-radius:9px;gap:2px}
+.lang button{appearance:none;border:0;background:transparent;color:var(--muted);font:700 .8rem var(--body);letter-spacing:.06em;padding:7px 11px;border-radius:6px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;background:var(--soft);padding:6px;border-radius:12px}
+.tab{appearance:none;border:0;background:transparent;color:var(--muted);font:600 .92rem/1.25 var(--body);padding:10px 8px;border-radius:8px;cursor:pointer;text-align:center}
+.tab span{display:block;font:400 .78rem var(--body);letter-spacing:.04em;text-transform:uppercase;opacity:.8}
+.tab b{font-weight:inherit}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--spruce);outline-offset:2px}
+section.panel{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--display);font-weight:400;font-size:1.45rem;margin:0}
+.lead{margin:0;color:var(--muted);max-width:62ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px}
+label{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:600;color:var(--muted);min-width:0}
+input,textarea{font:16px/1.4 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
+textarea{resize:vertical;min-height:64px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;word-break:break-all}
+.btns{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button.primary,button.ghost{font:600 .95rem var(--body);border-radius:9px;padding:11px 18px;cursor:pointer;border:1px solid transparent}
+button.primary{background:var(--spruce);color:var(--spruce-ink)}
+button.primary:hover{filter:brightness(1.08)}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button.ghost:hover{background:var(--soft)}
+button.small{padding:7px 12px;font-size:.85rem}
+button.danger{color:var(--berry);border-color:var(--berry)}
+button:disabled{opacity:.55;cursor:default}
+.msg{font-size:.9rem;padding:10px 12px;border-radius:8px;background:var(--soft);margin:0}
+.msg.err{color:var(--berry)}
+.msg.ok{color:var(--spruce);font-weight:600}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+.stack{display:flex;flex-direction:column;gap:10px}
+.keybox{border-top:1px solid var(--line);padding-top:14px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.9rem;color:var(--muted)}
+.facts b{color:var(--ink);font-variant-numeric:tabular-nums}
+.names{display:flex;flex-wrap:wrap;gap:6px}
+.name{font-size:.85rem;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--soft)}
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.prow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.prow:first-child{border-top:0}
+.prow .pn{font-weight:600;flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.prow .pi{font:400 1rem var(--display);color:var(--muted);width:1.6em;font-variant-numeric:tabular-nums}
+.confirm{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--soft);padding:10px 12px;border-radius:8px}
+footer{text-align:center}
+footer a{color:var(--muted);font-size:.85rem}
+/* the slip */
+.stage{display:flex;justify-content:center;padding:12px 0 4px;perspective:1200px}
+.slip{width:min(100%,420px);position:relative}
+.half{background:var(--paper);color:#1d2a2a;padding:22px 24px;border:1px solid rgba(0,0,0,.08);box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.top{border-radius:6px 6px 0 0;min-height:150px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;
+  background-image:repeating-linear-gradient(transparent 0 31px,rgba(30,91,76,.13) 31px 32px)}
+.bottom{border-radius:0 0 6px 6px;border-top:1px dashed rgba(0,0,0,.18);background-image:repeating-linear-gradient(transparent 0 31px,rgba(30,91,76,.13) 31px 32px)}
+.cover{position:absolute;inset:0 0 auto 0;height:100%;transform-origin:top center;transition:transform .9s cubic-bezier(.5,.1,.2,1);z-index:2;
+  background:var(--paper);border-radius:6px;border:1px solid rgba(0,0,0,.08);box-shadow:0 10px 24px rgba(0,0,0,.18);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;backface-visibility:hidden;cursor:pointer;color:#1d2a2a}
+.slip.open .cover{transform:rotateX(-178deg)}
+.seal{width:64px;height:64px;border-radius:50%;background:#A8233A;color:#fff;display:grid;place-items:center;font:400 1.6rem var(--display);box-shadow:inset 0 0 0 4px rgba(255,255,255,.25)}
+.cover p{margin:0;font:700 1.5rem var(--hand)}
+.small-cap{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#5d6b6b;font-weight:600}
+.recv{font:700 2.6rem/1 var(--hand);color:#1E5B4C}
+.wl{list-style:none;margin:6px 0 0;padding:0;font:500 1.45rem/32px var(--hand)}
+.wl li::before{content:"– ";color:#A8233A}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:.88rem;color:#3f4d4d}
+.meta b{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.cover{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 data-i18n="h1">Wichtel-Zettel</h1>
+      <p data-i18n="intro"></p>
+    </div>
+    <div class="lang" role="group" aria-label="Sprache / Language">
+      <button id="lang-de" aria-pressed="true" lang="de">DE</button>
+      <button id="lang-en" aria-pressed="false" lang="en">EN</button>
+    </div>
+  </header>
+
+  <p class="msg err" id="conn" hidden></p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-wish" aria-selected="true" data-p="p-wish"><span data-i18n="step1"></span><b data-i18n="tabWish"></b></button>
+    <button class="tab" role="tab" id="t-draw" aria-selected="false" data-p="p-draw"><span data-i18n="step2"></span><b data-i18n="tabDraw"></b></button>
+    <button class="tab" role="tab" id="t-org" aria-selected="false" data-p="p-org" hidden><span data-i18n="orgTag"></span><b data-i18n="tabOrg"></b></button>
+  </div>
+
+  <!-- Wünsche abgeben -->
+  <section class="panel" id="p-wish">
+    <div>
+      <h2 data-i18n="wishH"></h2>
+      <p class="lead" data-i18n="wishLead"></p>
+    </div>
+    <div class="facts" id="facts"></div>
+    <div class="card">
+      <label for="w-name"><span data-i18n="yourName"></span><input id="w-name" autocomplete="off" maxlength="40" data-i18n-ph="phName"></label>
+      <label for="w-1"><span data-i18n="idea1"></span><input id="w-1" maxlength="120" data-i18n-ph="ph1"></label>
+      <label for="w-2"><span data-i18n="idea2"></span><input id="w-2" maxlength="120" data-i18n-ph="ph2"></label>
+      <label for="w-3"><span data-i18n="idea3"></span><input id="w-3" maxlength="120" data-i18n-ph="ph3"></label>
+      <div class="btns"><button class="primary" id="w-send" data-i18n="submit"></button></div>
+      <p class="msg" id="w-msg" hidden></p>
+      <div id="w-keybox" class="stack keybox" hidden>
+        <p class="hint" data-i18n="keyHint"></p>
+        <textarea id="w-key" readonly></textarea>
+        <div class="btns"><button class="ghost small" id="w-keycopy" data-i18n="copyKey"></button><span class="hint" id="w-keydone" data-i18n="copied" hidden></span></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="phead"><h2 data-i18n="alreadyIn"></h2><button class="ghost small" id="w-refresh" data-i18n="refresh"></button></div>
+      <div class="names" id="w-names"></div>
+    </div>
+  </section>
+
+  <!-- Zettel ziehen -->
+  <section class="panel" id="p-draw" hidden>
+    <div>
+      <h2 data-i18n="drawH"></h2>
+      <p class="lead" data-i18n="drawLead"></p>
+    </div>
+    <div class="card" id="d-input">
+      <p class="msg" id="d-state"></p>
+      <div id="d-keyrow" class="stack" hidden>
+        <p class="hint" data-i18n="needKey"></p>
+        <label for="d-key"><span data-i18n="keyLabel"></span><textarea id="d-key" placeholder="SCHLUESSEL-…"></textarea></label>
+      </div>
+      <div class="btns"><button class="primary" id="d-go" data-i18n="drawBtn"></button></div>
+      <p class="msg err" id="d-err" hidden></p>
+    </div>
+    <div id="d-slipwrap" hidden>
+      <div class="stage">
+        <div class="slip" id="slip">
+          <div class="cover" id="cover" role="button" tabindex="0">
+            <div class="seal">W</div>
+            <p id="cover-name"></p>
+            <span class="small-cap" data-i18n="tapOpen"></span>
+          </div>
+          <div class="half top">
+            <span class="small-cap" data-i18n="youGive"></span>
+            <div class="recv" id="r-name"></div>
+          </div>
+          <div class="half bottom">
+            <span class="small-cap" data-i18n="wishes"></span>
+            <ul class="wl" id="r-wishes"></ul>
+            <div class="meta" id="r-meta"></div>
+          </div>
+        </div>
+      </div>
+      <div class="btns" style="justify-content:center;margin-top:14px"><button class="ghost small" id="d-back" data-i18n="back"></button></div>
+    </div>
+  </section>
+
+  <!-- Organisation -->
+  <section class="panel" id="p-org" hidden>
+    <div>
+      <h2 data-i18n="orgH"></h2>
+      <p class="lead" data-i18n="orgLead"></p>
+    </div>
+    <div class="card" id="o-login">
+      <label for="o-pin"><span data-i18n="pin"></span><input id="o-pin" type="password" autocomplete="current-password"></label>
+      <div class="btns"><button class="primary" id="o-loginbtn" data-i18n="login"></button></div>
+      <p class="msg err" id="o-loginerr" hidden></p>
+    </div>
+    <div id="o-panel" class="stack" hidden>
+      <div class="card">
+        <div class="phead"><h2 data-i18n="peopleH"></h2><span class="hint" id="o-count"></span></div>
+        <div id="o-people"></div>
+        <div class="btns"><button class="ghost small" id="o-refresh" data-i18n="refresh"></button></div>
+      </div>
+      <p class="msg" id="o-status"></p>
+      <div class="btns" id="o-actions">
+        <button class="primary" id="o-draw" data-i18n="drawNow"></button>
+        <button class="ghost small" id="o-redo" data-i18n="redo"></button>
+        <button class="ghost small danger" id="o-reopen" data-i18n="reopen"></button>
+      </div>
+      <div class="confirm" id="o-confirm" hidden>
+        <span id="o-confirmq"></span>
+        <button class="primary small" id="o-yes" data-i18n="yes"></button>
+        <button class="ghost small" id="o-no" data-i18n="cancel"></button>
+      </div>
+      <p class="msg err" id="o-err" hidden></p>
+    </div>
+  </section>
+
+  <footer><a href="#orga" id="orga-link" data-i18n="orgLink"></a></footer>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  // ---------- texts ----------
+  const T = {
+    de:{
+      h1:"Wichtel-Zettel",
+      intro:"Fair auslosen, auch wenn niemand im selben Raum ist. Wünsche eintragen, warten bis ausgelost ist, Zettel ziehen.",
+      step1:"Schritt 1",step2:"Schritt 2",orgTag:"Organisation",
+      tabWish:"Wünsche abgeben",tabDraw:"Zettel ziehen",tabOrg:"Auslosen",
+      notConnected:"Die Seite ist noch nicht mit der Google-Tabelle verbunden. Trag die Web-App-Adresse oben in der index.html ein.",
+      netErr:"Keine Verbindung zum Server. Prüf deine Internetverbindung und versuch es nochmal.",
+      wishH:"Deine Geschenkideen",
+      wishLead:"Trag deinen Namen und bis zu drei Ideen ein und tipp auf „Absenden“. Deine Wünsche sieht nur die Person, die dich zieht.",
+      yourName:"Dein Name",idea1:"Idee 1",idea2:"Idee 2",idea3:"Idee 3",
+      phName:"z. B. Anna",ph1:"z. B. Buch von Sebastian Fitzek",ph2:"z. B. Gutschein fürs Kino",ph3:"z. B. warme Wollsocken, Gr. 39",
+      submit:"Absenden",sending:"Wird gesendet …",
+      joined:n=>"Du bist dabei, "+n+"! Bis zum Auslosen kannst du deine Wünsche ändern, indem du sie einfach nochmal absendest.",
+      nameTaken:"Diesen Namen hat schon jemand anderes eingetragen. Ergänze zum Beispiel einen Anfangsbuchstaben.",
+      alreadyDrawn:"Es wurde schon ausgelost. Neue Einträge sind nicht mehr möglich.",
+      badRequest:"Bitte trag deinen Namen ein.",
+      full:"Es sind schon zu viele Personen eingetragen.",
+      keyHint:"Das ist dein persönlicher Schlüssel für deinen Zettel. Er ist in diesem Browser gespeichert. Heb ihn trotzdem für dich auf und schick ihn niemandem. Du brauchst ihn, wenn du deinen Zettel später auf einem anderen Gerät oder in einem anderen Browser ziehst.",
+      copyKey:"Schlüssel kopieren",copied:"Kopiert",
+      alreadyIn:"Schon dabei",nobodyYet:"Noch niemand eingetragen.",refresh:"Aktualisieren",
+      budget:"Budget",exchangeL:"Bescherung",occasionL:"Anlass",money:b=>b+" €",
+      drawH:"Zettel ziehen",
+      drawLead:"Sobald ausgelost wurde, tippst du auf „Zettel ziehen“ und klappst deinen Zettel auf. Er geht nur mit deinem Schlüssel auf. Am einfachsten nutzt du dasselbe Gerät und denselben Browser wie beim Wünsche-Abgeben.",
+      drawBtn:"Zettel ziehen",loading:"Einen Moment …",
+      readyState:"Es ist ausgelost. Tipp auf „Zettel ziehen“.",
+      notYet:"Es wurde noch nicht ausgelost. Schau später nochmal vorbei.",
+      noSlip:"Auf diesem Gerät liegt kein passender Schlüssel. Hast du deine Wünsche auf einem anderen Gerät oder in einem anderen Browser abgegeben? Dann füge deinen Schlüssel ein.",
+      needKey:"Füge deinen Schlüssel ein. Er beginnt mit SCHLUESSEL- und wurde dir nach dem Absenden deiner Wünsche angezeigt.",
+      keyLabel:"Dein Schlüssel",
+      wrongKey:"Der Schlüssel passt zu keinem Zettel. Nimm den Schlüssel, den du beim Wünsche-Abgeben bekommen hast.",
+      tapOpen:"Antippen zum Aufklappen",youGive:"Du beschenkst",wishes:"Wünsche",back:"Zurück",
+      forName:n=>"Für "+n,noWishes:"Keine Wünsche angegeben. Überrasch die Person!",openSlip:"Zettel aufklappen",
+      orgH:"Auslosen",
+      orgLead:"Nur für die Organisation. Hier siehst du nur, wer dabei ist. Die Wünsche bleiben verborgen und die Zettel werden verschlüsselt, sodass auch du die Zuordnung nicht siehst.",
+      pin:"Organisator-PIN",login:"Anmelden",badPin:"Die PIN stimmt nicht.",
+      pinNotSet:"In Code.gs ist noch keine PIN eingetragen. Trag dort bei ORGA_PIN eine eigene PIN ein und stell die Web-App neu bereit.",
+      peopleH:"Dabei",count:n=>n===1?"1 Person":n+" Personen",
+      remove:"Entfernen",drawNow:"Jetzt auslosen",drawing:"Wird ausgelost …",
+      min3:"Es müssen mindestens drei Personen dabei sein.",
+      notDrawn:n=>n+" Personen sind dabei. Wenn alle eingetragen sind, tipp auf „Jetzt auslosen“.",
+      isDrawn:n=>"Ausgelost. Die "+n+" Zettel liegen bereit. Sag allen Bescheid, dass sie jetzt ziehen können.",
+      redo:"Neu auslosen",redoQ:"Alle bekommen dann einen neuen Zettel. Wer schon gezogen hat, hat danach eventuell eine andere Person. Wirklich neu auslosen?",
+      reopen:"Auslosung zurücksetzen",reopenQ:"Die Zettel werden entfernt und man kann sich wieder eintragen. Fortfahren?",
+      yes:"Ja",cancel:"Abbrechen",
+      removeBlocked:"Nach dem Auslosen kann niemand entfernt werden. Setz zuerst die Auslosung zurück.",
+      orgLink:"Für die Organisation"
+    },
+    en:{
+      h1:"Secret Santa Slips",
+      intro:"A fair draw even when nobody is in the same room. Enter your wishes, wait for the draw, then draw your slip.",
+      step1:"Step 1",step2:"Step 2",orgTag:"Organizer",
+      tabWish:"Submit wishes",tabDraw:"Draw your slip",tabOrg:"Run the draw",
+      notConnected:"This page isn't connected to the Google Sheet yet. Enter the web app URL at the top of index.html.",
+      netErr:"Can't reach the server. Check your internet connection and try again.",
+      wishH:"Your gift ideas",
+      wishLead:"Enter your name and up to three ideas and tap “Submit”. Only the person who draws you will see your wishes.",
+      yourName:"Your name",idea1:"Idea 1",idea2:"Idea 2",idea3:"Idea 3",
+      phName:"e.g. Anna",ph1:"e.g. a crime novel",ph2:"e.g. cinema voucher",ph3:"e.g. warm wool socks, size 6",
+      submit:"Submit",sending:"Sending …",
+      joined:n=>"You're in, "+n+"! Until the draw you can change your wishes by simply submitting again.",
+      nameTaken:"Someone else has already used this name. Add an initial, for example.",
+      alreadyDrawn:"The draw has already happened. No new entries are possible.",
+      badRequest:"Please enter your name.",
+      full:"Too many people have signed up already.",
+      keyHint:"This is your personal key for your slip. It's saved in this browser. Keep a copy for yourself anyway and don't send it to anyone. You'll need it if you draw your slip later on another device or in another browser.",
+      copyKey:"Copy key",copied:"Copied",
+      alreadyIn:"Already in",nobodyYet:"Nobody has signed up yet.",refresh:"Refresh",
+      budget:"Budget",exchangeL:"Gift exchange",occasionL:"Occasion",money:b=>"€"+b,
+      drawH:"Draw your slip",
+      drawLead:"Once the draw has happened, tap “Draw slip” and unfold your slip. It only opens with your key. The easiest way is to use the same device and browser you used to submit your wishes.",
+      drawBtn:"Draw slip",loading:"One moment …",
+      readyState:"The draw is done. Tap “Draw slip”.",
+      notYet:"The draw hasn't happened yet. Check back later.",
+      noSlip:"There's no matching key on this device. Did you submit your wishes on another device or in another browser? Then paste your key.",
+      needKey:"Paste your key. It starts with SCHLUESSEL- and was shown after you submitted your wishes.",
+      keyLabel:"Your key",
+      wrongKey:"That key doesn't match any slip. Use the key you got when you submitted your wishes.",
+      tapOpen:"Tap to unfold",youGive:"You're buying for",wishes:"Wishes",back:"Back",
+      forName:n=>"For "+n,noWishes:"No wishes given. Surprise them!",openSlip:"Unfold slip",
+      orgH:"Run the draw",
+      orgLead:"For the organizer only. You only see who's taking part. Wishes stay hidden and the slips are encrypted, so not even you can see who got whom.",
+      pin:"Organizer PIN",login:"Sign in",badPin:"Wrong PIN.",
+      pinNotSet:"No PIN has been set in Code.gs yet. Enter your own PIN at ORGA_PIN and redeploy the web app.",
+      peopleH:"Taking part",count:n=>n===1?"1 person":n+" people",
+      remove:"Remove",drawNow:"Draw now",drawing:"Drawing …",
+      min3:"At least three people need to take part.",
+      notDrawn:n=>n+" people are in. Once everyone has signed up, tap “Draw now”.",
+      isDrawn:n=>"Done. The "+n+" slips are ready. Let everyone know they can draw now.",
+      redo:"Redo the draw",redoQ:"Everyone gets a new slip. Anyone who already drew may end up with a different person. Really redo the draw?",
+      reopen:"Reset the draw",reopenQ:"The slips are removed and people can sign up again. Continue?",
+      yes:"Yes",cancel:"Cancel",
+      removeBlocked:"Nobody can be removed after the draw. Reset the draw first.",
+      orgLink:"For the organizer"
+    }
+  };
+
+  // ---------- language ----------
+  const store = {
+    get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
+  let lang = store.get("wz-lang")==="en" ? "en" : "de";
+  if(location.hash==="#en") lang="en"; else if(location.hash==="#de") lang="de";
+  const t = k => T[lang][k];
+  const rerender = [];
+  function applyLang(){
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-ph]").forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
+    $("lang-de").setAttribute("aria-pressed", lang==="de");
+    $("lang-en").setAttribute("aria-pressed", lang==="en");
+    $("cover").setAttribute("aria-label", t("openSlip"));
+    rerender.forEach(f=>f());
+  }
+  function setLang(l){ lang=l; store.set("wz-lang", l); applyLang(); }
+  $("lang-de").addEventListener("click",()=>setLang("de"));
+  $("lang-en").addEventListener("click",()=>setLang("en"));
+
+  // ---------- tabs ----------
+  const tabs = document.querySelectorAll(".tab");
+  function show(pid){
+    tabs.forEach(tb=>{ const on = tb.dataset.p===pid; tb.setAttribute("aria-selected", on); $(tb.dataset.p).hidden = !on; });
+    if(pid!=="p-org") loadStatus();
+  }
+  tabs.forEach(tb=>tb.addEventListener("click",()=>show(tb.dataset.p)));
+  function openOrg(){ $("t-org").hidden=false; show("p-org"); }
+  if(location.hash==="#orga") openOrg();
+  window.addEventListener("hashchange",()=>{
+    if(location.hash==="#orga") openOrg();
+    else if(location.hash==="#en") setLang("en");
+    else if(location.hash==="#de") setLang("de");
+  });
+
+  // ---------- server ----------
+  async function api(action, data){
+    if(!API_URL) throw {code:"not_connected"};
+    let r, j;
+    try{
+      r = await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({action},data||{}))});
+      j = await r.json();
+    }catch(e){ throw {code:"network"}; }
+    if(!j || !j.ok) throw {code:(j && j.error) || "server"};
+    return j;
+  }
+  function errKey(e){
+    return ({not_connected:"notConnected",name_taken:"nameTaken",already_drawn:"alreadyDrawn",bad_pin:"badPin",
+      pin_not_set:"pinNotSet",drawn_locked:"removeBlocked",bad_request:"badRequest",full:"full"})[e && e.code] || "netErr";
+  }
+
+  // ---------- light obfuscation, so wishes are not readable in the sheet ----------
+  const KEY = new TextEncoder().encode("wichtel-zettel-2026");
+  function enc(prefix, obj){
+    const bytes = new TextEncoder().encode(JSON.stringify(obj));
+    let s = "";
+    for (let i=0;i<bytes.length;i++) s += String.fromCharCode(bytes[i] ^ KEY[i % KEY.length]);
+    return prefix + "-" + btoa(s);
+  }
+  function dec(prefix, text){
+    const m = String(text||"").match(new RegExp(prefix+"-([A-Za-z0-9+/=]+)"));
+    if(!m) return null;
+    try{
+      const s = atob(m[1]); const b = new Uint8Array(s.length);
+      for (let i=0;i<s.length;i++) b[i] = s.charCodeAt(i) ^ KEY[i % KEY.length];
+      return JSON.parse(new TextDecoder().decode(b));
+    }catch(e){ return null; }
+  }
+
+  // ---------- per-person key (ECDH P-256 + AES-GCM) ----------
+  const subtle = crypto.subtle;
+  const EC = {name:"ECDH",namedCurve:"P-256"};
+  const b64 = u8 => { let s=""; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]); return btoa(s); };
+  const unb64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+  const b64u = u8 => b64(u8).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  const unb64u = s => unb64(s.replace(/-/g,"+").replace(/_/g,"/") + "===".slice((s.length+3)%4));
+  const cat = (...a) => { const o=new Uint8Array(a.reduce((n,x)=>n+x.length,0)); let p=0; a.forEach(x=>{o.set(x,p);p+=x.length;}); return o; };
+
+  async function parseKey(text){
+    const m = String(text||"").match(/SCHLUESSEL-([A-Za-z0-9+/=]+)/);
+    if(!m) return null;
+    try{
+      const b = unb64(m[1]); if(b.length!==96) return null;
+      const jwk = {kty:"EC",crv:"P-256",d:b64u(b.slice(0,32)),x:b64u(b.slice(32,64)),y:b64u(b.slice(64,96)),ext:true};
+      const priv = await subtle.importKey("jwk",jwk,EC,false,["deriveKey"]);
+      return {priv, pub:b64(cat(new Uint8Array([4]),b.slice(32,64),b.slice(64,96))), text:"SCHLUESSEL-"+m[1]};
+    }catch(e){ return null; }
+  }
+  async function myKey(){
+    const k = await parseKey(store.get("wz-key"));
+    if(k) return k;
+    const kp = await subtle.generateKey(EC,true,["deriveKey"]);
+    const j = await subtle.exportKey("jwk",kp.privateKey);
+    const text = "SCHLUESSEL-" + b64(cat(unb64u(j.d),unb64u(j.x),unb64u(j.y)));
+    store.set("wz-key", text);
+    return parseKey(text);
+  }
+  async function seal(pubB64, obj){
+    const pub = await subtle.importKey("raw",unb64(pubB64),EC,false,[]);
+    const eph = await subtle.generateKey(EC,true,["deriveKey"]);
+    const aes = await subtle.deriveKey({name:"ECDH",public:pub},eph.privateKey,{name:"AES-GCM",length:256},false,["encrypt"]);
+    let json = JSON.stringify(obj);
+    const target = Math.ceil((new TextEncoder().encode(json).length+1)/512)*512; // equal sizes, so length reveals nothing
+    while(new TextEncoder().encode(json).length < target) json += " ";
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await subtle.encrypt({name:"AES-GCM",iv},aes,new TextEncoder().encode(json)));
+    const ephRaw = new Uint8Array(await subtle.exportKey("raw",eph.publicKey));
+    return "ZETTEL2-" + b64(cat(ephRaw,iv,ct));
+  }
+  async function unseal(text, priv){
+    const m = String(text||"").match(/ZETTEL2-([A-Za-z0-9+/=]+)/);
+    if(!m||!priv) return null;
+    try{
+      const b = unb64(m[1]);
+      const eph = await subtle.importKey("raw",b.slice(0,65),EC,false,[]);
+      const aes = await subtle.deriveKey({name:"ECDH",public:eph},priv,{name:"AES-GCM",length:256},false,["decrypt"]);
+      const pt = await subtle.decrypt({name:"AES-GCM",iv:b.slice(65,77)},aes,b.slice(77));
+      return JSON.parse(new TextDecoder().decode(pt));
+    }catch(e){ return null; }
+  }
+
+  // ---------- random ----------
+  function randInt(n){ const a=new Uint32Array(1); const lim=Math.floor(0x100000000/n)*n; let x; do{crypto.getRandomValues(a);x=a[0];}while(x>=lim); return x%n; }
+  // Sattolo: one random cycle. Nobody draws themselves, and no two people draw each other.
+  function cycle(n){
+    const a=[...Array(n).keys()];
+    for(let i=n-1;i>0;i--){ const j=randInt(i); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=randInt(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+  // ---------- copy ----------
+  async function copy(text){ try{ await navigator.clipboard.writeText(text); return true; }catch(e){ return false; } }
+
+  // ---------- shared status ----------
+  let STATUS = null, connErr = null;
+  async function loadStatus(){
+    try{ STATUS = await api("status"); connErr = null; }
+    catch(e){ connErr = e; }
+    renderStatus();
+    return STATUS;
+  }
+  function renderStatus(){
+    const c=$("conn"); c.hidden = !connErr; if(connErr) c.textContent = t(errKey(connErr));
+    const f=$("facts"); f.textContent="";
+    if(STATUS && STATUS.settings){
+      const s=STATUS.settings;
+      [[t("occasionL"),s.t],[t("budget"),s.b?t("money")(s.b):""],[t("exchangeL"),s.d]].filter(x=>x[1]).forEach(([k,v])=>{
+        const sp=document.createElement("span"); sp.append(k+": "); const b=document.createElement("b"); b.textContent=v; sp.append(b); f.appendChild(sp);
+      });
+    }
+    const box=$("w-names"); box.textContent="";
+    const names = STATUS ? STATUS.names : [];
+    if(!names.length){ const p=document.createElement("p"); p.className="hint"; p.textContent=t("nobodyYet"); box.appendChild(p); }
+    names.forEach(n=>{ const s=document.createElement("span"); s.className="name"; s.textContent=n; box.appendChild(s); });
+    $("d-state").textContent = STATUS ? t(STATUS.drawn ? "readyState" : "notYet") : "";
+  }
+  rerender.push(renderStatus);
+  $("w-refresh").addEventListener("click", loadStatus);
+
+  // ---------- step 1: submit wishes ----------
+  try{
+    const me = JSON.parse(store.get("wz-me")||"null");
+    if(me){ $("w-name").value=me.n||""; ["w-1","w-2","w-3"].forEach((id,i)=>$(id).value=(me.w&&me.w[i])||""); }
+  }catch(e){}
+  let joinedName = null;
+  function renderJoin(){
+    if(joinedName){ const m=$("w-msg"); m.hidden=false; m.className="msg ok"; m.textContent=t("joined")(joinedName); }
+  }
+  rerender.push(renderJoin);
+  $("w-send").addEventListener("click", async ()=>{
+    const btn=$("w-send"), msg=$("w-msg");
+    const name = $("w-name").value.trim();
+    if(!name){ $("w-name").focus(); msg.hidden=false; msg.className="msg err"; msg.textContent=t("badRequest"); return; }
+    const w = [$("w-1").value,$("w-2").value,$("w-3").value].map(s=>s.trim()).filter(Boolean);
+    btn.disabled=true; btn.textContent=t("sending"); msg.hidden=true; joinedName=null;
+    try{
+      const key = await myKey();
+      const code = enc("WUNSCH",{n:name,w});
+      STATUS = await api("join",{name,k:key.pub,code}); connErr=null;
+      store.set("wz-me", JSON.stringify({n:name,w}));
+      joinedName = name; renderJoin(); renderStatus();
+      $("w-key").value = key.text; $("w-keybox").hidden=false; $("w-keydone").hidden=true;
+    }catch(e){
+      msg.hidden=false; msg.className="msg err"; msg.textContent=t(errKey(e));
+    }
+    btn.disabled=false; btn.textContent=t("submit");
+  });
+  $("w-keycopy").addEventListener("click", async ()=>{
+    if(await copy($("w-key").value)) $("w-keydone").hidden=false; else $("w-key").select();
+  });
+
+  // ---------- step 2: draw your slip ----------
+  let slip = null;
+  function renderSlip(){
+    if(!slip) return;
+    const d = slip;
+    $("cover-name").textContent = t("forName")(d.g);
+    $("r-name").textContent = d.r;
+    const ul=$("r-wishes"); ul.textContent="";
+    (d.w&&d.w.length?d.w:[t("noWishes")]).forEach(s=>{const li=document.createElement("li"); li.textContent=s; ul.appendChild(li);});
+    const meta=$("r-meta"); meta.textContent="";
+    const rows=[];
+    if(String(d.b??"").trim()) rows.push([t("budget"),t("money")(d.b)]);
+    if(String(d.d??"").trim()) rows.push([t("exchangeL"),d.d]);
+    if(String(d.t??"").trim()) rows.push([t("occasionL"),d.t]);
+    rows.forEach(([k,v])=>{ const s=document.createElement("span"); s.append(k+": "); const b=document.createElement("b"); b.textContent=v; s.append(b); meta.appendChild(s); });
+  }
+  rerender.push(renderSlip);
+  function openSlip(){ $("slip").classList.add("open"); $("cover").setAttribute("aria-hidden","true"); $("cover").tabIndex=-1; }
+  $("d-go").addEventListener("click", async ()=>{
+    const btn=$("d-go"), err=$("d-err"); err.hidden=true;
+    const showErr = k => { err.hidden=false; err.textContent=t(k); };
+    btn.disabled=true; btn.textContent=t("loading");
+    try{
+      const st = await loadStatus();
+      if(!st) return showErr(errKey(connErr));
+      if(!st.slips || !Array.isArray(st.slips.s)) return showErr("notYet");
+      const typed = $("d-key").value.trim();
+      const given = typed ? await parseKey(typed) : null;
+      if(typed && !given) return showErr("wrongKey");
+      const own = await parseKey(store.get("wz-key"));
+      let d = null;
+      for(const k of [given, own].filter(Boolean)){
+        for(const c of st.slips.s){ d = await unseal(c, k.priv); if(d) break; }
+        if(d) break;
+      }
+      if(!d){ $("d-keyrow").hidden=false; $("d-key").focus(); return showErr(typed ? "wrongKey" : "noSlip"); }
+      if(given) store.set("wz-key", given.text);
+      $("d-keyrow").hidden=true; $("d-key").value="";
+      slip = d; renderSlip();
+      $("slip").classList.remove("open"); $("cover").removeAttribute("aria-hidden"); $("cover").tabIndex=0;
+      $("d-input").hidden=true; $("d-slipwrap").hidden=false;
+    } finally {
+      btn.disabled=false; btn.textContent=t("drawBtn");
+    }
+  });
+  $("cover").addEventListener("click",openSlip);
+  $("cover").addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openSlip(); }});
+  $("d-back").addEventListener("click",()=>{ $("d-slipwrap").hidden=true; $("d-input").hidden=false; slip=null; });
+
+  // ---------- organizer ----------
+  let PIN = null, ADMIN = null;
+  try{ PIN = sessionStorage.getItem("wz-pin"); }catch(e){}
+  function orgErr(e){ const el=$("o-err"); el.hidden=!e; if(e) el.textContent=t(errKey(e)); }
+  function renderOrg(){
+    if(!ADMIN){ $("o-login").hidden=false; $("o-panel").hidden=true; return; }
+    $("o-login").hidden=true; $("o-panel").hidden=false;
+    const list=ADMIN.entries||[], box=$("o-people"); box.textContent="";
+    $("o-count").textContent=t("count")(list.length);
+    if(!list.length){ const p=document.createElement("p"); p.className="hint"; p.textContent=t("nobodyYet"); box.appendChild(p); }
+    list.forEach((p,i)=>{
+      const row=document.createElement("div"); row.className="prow";
+      row.innerHTML=`<span class="pi"></span><span class="pn"></span><button class="ghost small"></button>`;
+      row.querySelector(".pi").textContent=i+1;
+      row.querySelector(".pn").textContent=p.name;
+      const rm=row.querySelector("button"); rm.textContent=t("remove"); rm.hidden=ADMIN.drawn;
+      rm.addEventListener("click", async ()=>{
+        rm.disabled=true;
+        try{ ADMIN = await api("remove",{pin:PIN,name:p.name}); orgErr(null); }catch(e){ orgErr(e); }
+        renderOrg();
+      });
+      box.appendChild(row);
+    });
+    $("o-status").textContent = ADMIN.drawn ? t("isDrawn")(list.length) : t("notDrawn")(list.length);
+    $("o-draw").hidden = ADMIN.drawn;
+    $("o-redo").hidden = !ADMIN.drawn;
+    $("o-reopen").hidden = !ADMIN.drawn;
+  }
+  rerender.push(renderOrg);
+  async function login(pin){
+    const errEl=$("o-loginerr"); errEl.hidden=true;
+    try{
+      ADMIN = await api("admin",{pin}); PIN = pin;
+      try{ sessionStorage.setItem("wz-pin", pin); }catch(e){}
+    }catch(e){
+      ADMIN = null;
+      if(e.code==="bad_pin"){ try{ sessionStorage.removeItem("wz-pin"); }catch(x){} }
+      errEl.hidden=false; errEl.textContent=t(errKey(e));
+    }
+    renderOrg();
+  }
+  $("o-loginbtn").addEventListener("click",()=>login($("o-pin").value));
+  $("o-pin").addEventListener("keydown",e=>{ if(e.key==="Enter") login($("o-pin").value); });
+  $("o-refresh").addEventListener("click", async ()=>{
+    try{ ADMIN = await api("admin",{pin:PIN}); orgErr(null); }catch(e){ orgErr(e); }
+    renderOrg();
+  });
+  if(PIN && location.hash==="#orga") login(PIN);
+  window.addEventListener("hashchange",()=>{ if(location.hash==="#orga" && PIN && !ADMIN) login(PIN); });
+
+  async function draw(){
+    orgErr(null);
+    const btns=[$("o-draw"),$("o-redo")]; btns.forEach(b=>b.disabled=true);
+    const label=$("o-draw").textContent; $("o-draw").textContent=t("drawing");
+    try{
+      ADMIN = await api("admin",{pin:PIN});
+      const people = (ADMIN.entries||[]).map(p=>{
+        const d = dec("WUNSCH",p.code);
+        return {name:p.name, k:p.k, w:(d && Array.isArray(d.w)) ? d.w.map(String).filter(Boolean).slice(0,3) : []};
+      });
+      if(people.length<3){ const el=$("o-err"); el.hidden=false; el.textContent=t("min3"); return; }
+      const perm = cycle(people.length);
+      const id = Array.from(crypto.getRandomValues(new Uint8Array(4)),b=>b.toString(16).padStart(2,"0")).join("");
+      const s = ADMIN.settings || {};
+      const codes = await Promise.all(people.map((p,i)=>{
+        const r = people[perm[i]];
+        return seal(p.k, {v:3,id,g:p.name,r:r.name,w:r.w,b:s.b,d:s.d,t:s.t});
+      }));
+      ADMIN = await api("publish",{pin:PIN,slips:{id,s:shuffle(codes)}});
+    }catch(e){ orgErr(e); }
+    finally{ btns.forEach(b=>b.disabled=false); $("o-draw").textContent=label; renderOrg(); }
+  }
+  let pending = null;
+  function ask(q, fn){ pending=fn; $("o-confirmq").textContent=t(q); $("o-confirm").hidden=false; $("o-actions").hidden=true; }
+  function closeAsk(){ pending=null; $("o-confirm").hidden=true; $("o-actions").hidden=false; }
+  $("o-draw").addEventListener("click",draw);
+  $("o-redo").addEventListener("click",()=>ask("redoQ",draw));
+  $("o-reopen").addEventListener("click",()=>ask("reopenQ",async ()=>{
+    try{ ADMIN = await api("unpublish",{pin:PIN}); orgErr(null); }catch(e){ orgErr(e); }
+    renderOrg();
+  }));
+  $("o-yes").addEventListener("click",()=>{ const f=pending; closeAsk(); if(f) f(); });
+  $("o-no").addEventListener("click",closeAsk);
+
+  applyLang();
+  loadStatus();
+})();
+</script>
+</body>
+</html>
